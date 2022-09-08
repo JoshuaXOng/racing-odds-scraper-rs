@@ -1,0 +1,13 @@
+[package]
+name = "racing-odds-scraper-rs"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "scraper"
+path = "src/scraper/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"] }
+clap = { version = "3.1.18", features = ["derive"] }
