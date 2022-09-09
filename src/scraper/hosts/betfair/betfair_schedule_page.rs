@@ -1,19 +1,31 @@
 use crate::pages::page::{Page, AsPage};
-pub use super::betfair_page::{BetfairPage};
+use crate::pages::schedule_page::{SchedulePage, AsSchedulePage};
+use super::betfair_page::BetfairPage;
+pub use super::betfair_page::{AsBetfairPage};
 
 pub struct BetfairSchedulePage {
-  pub page: Page
+  pub betfair_page: BetfairPage,
+  pub schedule_page: SchedulePage
+}
+
+impl BetfairSchedulePage {
 }
 
 impl AsPage for BetfairSchedulePage {
   fn get_page(&self) -> &Page {
-    &self.page
+    self.betfair_page.get_page()
   }
 }
 
-impl BetfairPage for BetfairSchedulePage {
+impl AsBetfairPage for BetfairSchedulePage {
+  fn get_betfair_page(&self) -> &BetfairPage {
+    &self.betfair_page
+  }
 }
 
-impl BetfairSchedulePage {
-  fn goto_schedule_page() {}
+impl AsSchedulePage for BetfairSchedulePage {
+  fn get_schedule_page(&self) -> &SchedulePage {
+    &self.schedule_page
+  }
 }
+

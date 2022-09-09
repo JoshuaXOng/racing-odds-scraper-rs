@@ -9,11 +9,11 @@ use crate::hosts::betfair::betfair_schedule_page::{BetfairSchedulePage, BetfairP
 
 fn main() {
   println!("+++");
-  let a = BetfairSchedulePage {
-    page: Page {
-      engine: 30
-    }
-  };
-  a.do_something();
-  a.do_something_bf();
+  // let a = BetfairSchedulePage {
+  //   page: Page {
+  //     engine: 30
+  //   }
+  // };
+  // a.do_something();
+  // a.do_something_bf();
 }
