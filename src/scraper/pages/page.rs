@@ -43,4 +43,8 @@ pub trait AsPage {
       _ => Ok(false)
     }
   }
+
+  async fn fake_mouse_movement() {
+    
+  }
 }

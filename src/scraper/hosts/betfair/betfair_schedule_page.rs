@@ -27,5 +27,18 @@ impl AsSchedulePage for BetfairSchedulePage {
   fn get_schedule_page(&self) -> &SchedulePage {
     &self.schedule_page
   }
+
+  fn perform_scrape(&self) -> {
+    self.get_schedule_page().page.evaluate_function("() => {
+      const venueRows = document.getElementsByClass(\"race-list\");      
+      venueRows.map(vRow => {
+        let events = [];
+
+        vRow.forEach(event_cell => {
+          
+        })
+      })
+    }")
+  }
 }
 
