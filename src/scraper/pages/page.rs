@@ -49,4 +49,8 @@ pub trait AsPage {
   async fn fake_mouse_movement() {
     
   }
+
+  async fn move_humanlike_to() {
+    
+  }
 }

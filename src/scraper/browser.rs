@@ -1,19 +1,22 @@
-use chromiumoxide::{Browser as BrowserEngine, BrowserConfig, Handler, cdp::browser_protocol::target::CreateTargetParams};
+pub use chromiumoxide::{Browser as BrowserEngine, BrowserConfig, Handler, cdp::browser_protocol::target::CreateTargetParams};
 
 pub struct Browser {
   pub engine: BrowserEngine,
-  handler: Handler
+  pub handler: Handler
 }
 
 impl Browser {
   pub async fn new(browser_config: Option<BrowserConfig>) -> Result<Self, BrowserError> {
     let browser_config = match browser_config {
-      None => BrowserConfig::builder().with_head().build().or_else(|error| Err(BrowserError::OpenBrowser))?,
+      None => BrowserConfig::builder().with_head().build().or_else(|_| dbg!(Err(BrowserError::OpenBrowser)))?,
       Some(browser_config) => browser_config
     };
 
     let (browser_engine, handler) = BrowserEngine::launch(browser_config).await
-      .map_err(|_| BrowserError::OpenBrowser)?;
+      .map_err(|error| {
+        dbg!(error);
+        dbg!(BrowserError::OpenBrowser)
+      })?;
 
     Ok(Browser {
       engine: browser_engine,
@@ -71,7 +74,7 @@ impl Browser {
 }
 
 #[derive(Debug)]
-enum BrowserError {
+pub enum BrowserError {
   OpenBrowser,
   OpenPage,
   ClosePage,
