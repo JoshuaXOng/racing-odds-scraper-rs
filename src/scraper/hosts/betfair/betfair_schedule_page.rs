@@ -7,38 +7,41 @@ use crate::pages::schedule_page::{SchedulePage, AsSchedulePage};
 use super::betfair_page::BetfairPage;
 pub use super::betfair_page::{AsBetfairPage};
 
-pub struct BetfairSchedulePage<'a> {
+pub struct BetfairSchedulePage {
   pub betfair_page: BetfairPage,
-  pub schedule_page: SchedulePage<'a>
+  pub schedule_page: SchedulePage
 }
 
-impl <'a> BetfairSchedulePage<'a> {
-  pub fn new(page_engine: PageEngine, target_url: &'a String) -> Self {
+impl BetfairSchedulePage {
+  pub fn new(page_engine: PageEngine, target_url: String) -> Self {
+    let page_engine = Arc::new(page_engine);
+    let target_url = Arc::new(target_url);
+
     BetfairSchedulePage {
       betfair_page: BetfairPage {
-        page: Page { engine: Arc::new(page_engine), target_url: Arc::new(Some(*target_url)) }
+        page: Page { engine: page_engine.clone(), target_url: Some(target_url.clone()) }
       },
       schedule_page: SchedulePage {
-        page: Page { engine: Arc::new(page_engine), target_url: Arc::new(Some(*target_url)) },
-        target_url: Arc::new(target_url)
+        page: Page { engine: page_engine.clone(), target_url: Some(target_url.clone()) },
+        target_url: target_url.clone()
       }
     }
   }
 }
 
-impl<'a> AsPage for BetfairSchedulePage<'a> {
+impl AsPage for BetfairSchedulePage {
   fn get_page(&self) -> &Page {
     self.betfair_page.get_page()
   }
 }
 
-impl<'a> AsBetfairPage for BetfairSchedulePage<'a> {
+impl AsBetfairPage for BetfairSchedulePage {
   fn get_betfair_page(&self) -> &BetfairPage {
     &self.betfair_page
   }
 }
 
-impl<'a> AsSchedulePage for BetfairSchedulePage<'a> {
+impl AsSchedulePage for BetfairSchedulePage {
   fn get_schedule_page(&self) -> &SchedulePage {
     &self.schedule_page
   }

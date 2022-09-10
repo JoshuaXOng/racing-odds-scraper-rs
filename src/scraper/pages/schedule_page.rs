@@ -5,9 +5,9 @@ use super::page::{Page, AsPage};
 use async_trait::async_trait;
 use chromiumoxide::error::CdpError;
 
-pub struct SchedulePage<'a> {
+pub struct SchedulePage {
   pub page: Page,
-  pub target_url: Arc<&'a String>,
+  pub target_url: Arc<String>,
 }
 
 #[async_trait]
