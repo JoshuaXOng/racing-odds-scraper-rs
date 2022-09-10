@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::{path::Path};
 
 use chromiumoxide::{page::{Page as PageEngine}, cdp::browser_protocol::page::{CaptureScreenshotParams, CaptureScreenshotFormat}, error::CdpError};
@@ -5,8 +6,8 @@ use chromiumoxide::{page::{Page as PageEngine}, cdp::browser_protocol::page::{Ca
 use async_trait::async_trait;
 
 pub struct Page {
-  pub engine: PageEngine,
-  pub target_url: Option<String>
+  pub engine: Arc<PageEngine>,
+  pub target_url: Arc<Option<String>>
 }
 
 #[async_trait]
@@ -37,8 +38,8 @@ pub trait AsPage {
   }
 
   async fn check_if_drift(&self) -> Result<bool, CdpError> {
-    match (self.get_page().engine.url().await, self.get_page().target_url) {
-      (Ok(Some(current_url)), Some(target_url)) => Ok(current_url == target_url),
+    match (self.get_page().engine.url().await, self.get_page().target_url.as_ref()) {
+      (Ok(Some(current_url)), Some(target_url)) => Ok(current_url == *target_url),
       (Err(error), _) => Err(error),
       _ => Ok(false)
     }

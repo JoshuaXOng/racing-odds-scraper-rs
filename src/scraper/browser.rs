@@ -1,12 +1,12 @@
 use chromiumoxide::{Browser as BrowserEngine, BrowserConfig, Handler, cdp::browser_protocol::target::CreateTargetParams};
 
-struct Browser {
-  engine: BrowserEngine,
+pub struct Browser {
+  pub engine: BrowserEngine,
   handler: Handler
 }
 
 impl Browser {
-  async fn new(browser_config: Option<BrowserConfig>) -> Result<Self, BrowserError> {
+  pub async fn new(browser_config: Option<BrowserConfig>) -> Result<Self, BrowserError> {
     let browser_config = match browser_config {
       None => BrowserConfig::builder().with_head().build().or_else(|error| Err(BrowserError::OpenBrowser))?,
       Some(browser_config) => browser_config

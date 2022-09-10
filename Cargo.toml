@@ -8,7 +8,8 @@ name = "scraper"
 path = "src/scraper/main.rs"
 
 [dependencies]
-chromiumoxide = { git = "https://github.com/mattsse/chromiumoxide", branch = "main"}
+async-std = "1.9.0"
 async-trait = "0.1.57"
+chromiumoxide = { git = "https://github.com/mattsse/chromiumoxide", branch = "main"}
 serde_json = "1.0"
 chrono = "0.4.11"
