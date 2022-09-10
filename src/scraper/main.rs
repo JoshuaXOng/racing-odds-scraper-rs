@@ -5,7 +5,7 @@ mod browser_group;
 mod browser;
 
 use crate::pages::page::{Page, AsPage};
-use crate::hosts::betfair::betfair_schedule_page::{BetfairSchedulePage, BetfairPage};
+use crate::hosts::betfair::betfair_schedule_page::{BetfairSchedulePage};
 
 fn main() {
   println!("+++");
