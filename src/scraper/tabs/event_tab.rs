@@ -10,5 +10,5 @@ pub struct EventTab {
 pub trait AsEventTab {
   fn get_event_tab(&self) -> &EventTab;
 
-  fn scrape_odds(&self) -> &Vec<ContestantOdds>;
+  fn scrape_odds(&self) -> Vec<ContestantOdds>;
 }

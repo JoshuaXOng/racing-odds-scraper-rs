@@ -1,10 +1,6 @@
 use super::money::Money;
 
 pub enum Odds {
-  OddsWoLiquidity,
-  OddsWLiquidity,
+  OddsWoLiquidity(f64),
+  OddsWLiquidity(f64, Money),
 }
-
-pub struct OddsWoLiquidity(f64);
-
-pub struct OddsWLiquidity(OddsWoLiquidity, Money);

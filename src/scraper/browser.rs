@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use headless_chrome::browser::Browser as BrowserEngine;
 use crate::tabs::tab::Tab;
 use crate::extensions::browser_engine::Extended;
@@ -54,7 +52,7 @@ impl Browser {
     if has_encountered_error { Ok(()) } else { Err(BrowserError::OpenPage) }
   }
 
-  fn clone(&self) -> Result<Self, BrowserError> {
+  pub fn clone(&self) -> Result<Self, BrowserError> {
     let mut new_browser = Browser::new()?;
     
     let from_urls = new_browser.browser_engine.get_current_urls()

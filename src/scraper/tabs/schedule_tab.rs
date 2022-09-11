@@ -10,5 +10,5 @@ pub struct ScheduleTab {
 pub trait AsScheduleTab {
   fn get_schedule_tab(&self) -> &ScheduleTab;
 
-  fn scrape_events(&self) -> &Vec<Event>;
+  fn scrape_events(&self) -> Vec<Event>;
 }

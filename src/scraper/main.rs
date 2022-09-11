@@ -1,4 +1,5 @@
 mod tabs; 
+mod hosts; 
 mod models;
 mod orchestrators;
 mod browser_group;
