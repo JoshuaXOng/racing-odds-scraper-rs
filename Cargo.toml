@@ -13,6 +13,5 @@ async-trait = "0.1.57"
 rand = "0.8.5"
 headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"] }
 failure = "0.1.8"
-chromiumoxide = { git = "https://github.com/mattsse/chromiumoxide", branch = "main" }
 serde_json = "1.0"
 chrono = "0.4.11"

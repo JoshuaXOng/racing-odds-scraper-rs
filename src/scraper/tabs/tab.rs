@@ -10,7 +10,7 @@ use headless_chrome::browser::tab::point::Point;
 use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
 
 pub struct Tab {
-  tab_engine: Arc<TabEngine>,
+  pub tab_engine: Arc<TabEngine>,
 }
 
 pub trait AsTab {
@@ -18,35 +18,35 @@ pub trait AsTab {
 
   fn goto_url(&self, target_url: &str) -> Result<(), TabError> {
     self.get_tab().tab_engine.navigate_to(target_url)
-      .map_err(|error| TabError::Navigate)?;
+      .map_err(|_| TabError::Navigate)?;
     
       Ok(())
   }
 
   fn refresh_page(&self) -> Result<(), TabError> {
     self.get_tab().tab_engine.reload(false, None)
-      .map_err(|error| TabError::Reload)?;
+      .map_err(|_| TabError::Reload)?;
 
     Ok(())
   }
 
   fn take_screenshot(&self, save_to_path: &Path) -> Result<(), TabError> {
     let capture_data = self.get_tab().tab_engine.capture_screenshot(CaptureScreenshotFormatOption::Png, None, None, false)
-      .map_err(|error| TabError::Screenshot)?;
+      .map_err(|_| TabError::Screenshot)?;
     
     fs::write(save_to_path, &capture_data)
-      .map_err(|error| TabError::Screenshot)?;
+      .map_err(|_| TabError::Screenshot)?;
 
     Ok(())
   }
 
   fn get_datetime(&self) -> Result<NaiveDateTime, TabError> {
     let js_datetime = self.get_tab().tab_engine.evaluate("new Date()", false)
-      .map_err(|error| TabError::Evaluate)?;
+      .map_err(|_| TabError::Evaluate)?;
     
     Ok(NaiveDateTime::from_str(
       dbg!(js_datetime.value.ok_or(TabError::Evaluate)?.as_str().ok_or(TabError::Evaluate)?)
-    ).map_err(|error| TabError::Evaluate)?)
+    ).map_err(|_| TabError::Evaluate)?)
   }
 
   fn fake_mouse_movement(&self) -> Result<(), TabError> {
