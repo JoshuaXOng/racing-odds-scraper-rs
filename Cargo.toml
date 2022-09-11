@@ -10,6 +10,7 @@ path = "src/scraper/main.rs"
 [dependencies]
 async-std = "1.9.0"
 async-trait = "0.1.57"
+rand = "0.8.5"
 headless_chrome = { git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"] }
 failure = "0.1.8"
 chromiumoxide = { git = "https://github.com/mattsse/chromiumoxide", branch = "main" }

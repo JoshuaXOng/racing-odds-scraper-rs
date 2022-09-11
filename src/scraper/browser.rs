@@ -80,7 +80,6 @@ pub enum BrowserError {
   ClosePage,
 }
 
-
 impl std::fmt::Display for BrowserError {
   fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
     match *self {

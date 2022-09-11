@@ -1,2 +1,3 @@
-pub mod betfair_page;
-pub mod betfair_schedule_page;
+pub mod betfair_tab;
+pub mod betfair_schedule_tab;
+pub mod betfair_event_tab;

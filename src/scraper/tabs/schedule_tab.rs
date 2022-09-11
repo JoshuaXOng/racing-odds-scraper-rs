@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use headless_chrome::browser::tab::Tab as TabEngine;
 
-use crate::models::event::Event;
+pub use crate::models::event::Event;
 
 pub struct ScheduleTab {
   tab_engine: Arc<TabEngine>,
