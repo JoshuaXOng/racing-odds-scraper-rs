@@ -9,14 +9,14 @@ pub static BETFAIR_CONSTANTS: BetfairConstants = BetfairConstants {
 
 pub struct BetfairCSSConstants {
   pub schedule_class: &'static str,
-  pub schedule_rday_class: &'static str,
+  pub schedule_day_class: &'static str,
   pub schedule_tab_class: &'static str,
   pub venue_schedule_class: &'static str,
 }
 
 pub static BETFAIR_CSS_CONSTANTS: BetfairCSSConstants = BetfairCSSConstants {
   schedule_class: "mod-todays-racing",
-  schedule_rday_class: "schedule-filter-button",
+  schedule_day_class: "schedule-filter-button",
   schedule_tab_class: "tab-wrapper",
   venue_schedule_class: "meeting-item"
 };
