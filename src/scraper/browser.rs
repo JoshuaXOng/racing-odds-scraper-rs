@@ -1,68 +1,109 @@
+use std::collections::HashMap;
+use std::hash::Hash;
+
+use headless_chrome::LaunchOptionsBuilder;
 use headless_chrome::browser::Browser as BrowserEngine;
-use crate::tabs::tab::Tab;
-use crate::extensions::browser_engine::Extended;
+use crate::hosts::betfair::betfair_tab::BetfairTab;
+use crate::tabs::event_tab::AsEventTab;
+use crate::tabs::schedule_tab::AsScheduleTab;
 
 pub struct Browser {
   pub browser_engine: BrowserEngine,
-  pub browser_tabs: Vec<Tab>,
+  pub event_tabs: HashMap<Host, Box<dyn AsEventTab>>,
+  pub schedule_tabs: HashMap<Host, Box<dyn AsScheduleTab>>,
 }
 
 impl Browser {
   pub fn new() -> Result<Self, BrowserError> {
+    let browser_options = LaunchOptionsBuilder::default()
+      .headless(false)
+      .build()
+      .map_err(|_| BrowserError::OpenBrowser)?;
+
+    let browser_engine = BrowserEngine::new(browser_options)
+      .map_err(|_| BrowserError::OpenBrowser)?;
+    browser_engine.wait_for_initial_tab()
+      .map_err(|_| BrowserError::OpenBrowser)?;
+    
     Ok(Self {
-      browser_engine: BrowserEngine::default().map_err(|_| BrowserError::OpenBrowser)?,
-      browser_tabs: vec![],
+      browser_engine,
+      event_tabs: HashMap::from([]),
+      schedule_tabs: HashMap::from([]),
     })
   }
 
-  fn close_pages(&self, urls_to_close: Vec<&str>, exempted_urls: Vec<&str>) -> Result<(), BrowserError> {
-    let mut has_encountered_error = false;
-
-    let current_pages = self.browser_engine.get_tabs().try_lock().map_err(|_| BrowserError::ClosePage)?;
-    for existing_page in current_pages.iter() {
-      if !exempted_urls.contains(&existing_page.get_url().as_str()) && urls_to_close.contains(&existing_page.get_url().as_str()) {
-        has_encountered_error = existing_page.close(false).is_ok();
+  pub fn open_page(&mut self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
+    match (tab_type, host_name.clone()) {
+      (TabType::Event, _) => {
+        let tab = self.event_tabs.get(&host_name.clone());
+        if (tab.is_some()) { 
+          return Ok(()); 
+        };
+        
+        match (self.browser_engine.new_tab(), host_name.clone()) {
+          (Err(_), _) => Err(BrowserError::OpenPage)?,
+          (Ok(tab_engine), Host::Betfair) => self.event_tabs
+            .insert(host_name.clone(), Box::new(BetfairTab::new(tab_engine)))
+        };
+      },
+      (TabType::Schedule, _) => {
+        let tab = self.schedule_tabs.get(&host_name.clone());
+        if (tab.is_some()) { 
+          return Ok(()); 
+        };
+        
+        match (self.browser_engine.new_tab(), host_name.clone()) {
+        (Err(_), _) => Err(BrowserError::OpenPage)?,
+        (Ok(tab_engine), Host::Betfair) => self.schedule_tabs
+          .insert(host_name.clone(), Box::new(BetfairTab::new(tab_engine)))
+        };
       }
-    }      
-  
-    if has_encountered_error { Ok(()) } else { Err(BrowserError::OpenPage) }  
-  }
-
-  fn open_pages(&mut self, urls_to_open: Vec<String>) -> Result<(), BrowserError> {
-    let mut has_encountered_error = false;
-
-    for url_to_open in  urls_to_open.iter() {
-      let new_tab = self.browser_engine.new_tab().map_err(|_| BrowserError::OpenPage);
-      if new_tab.is_err() {
-        has_encountered_error = true;
-        continue;
-      }
-
-      let tab_engine = new_tab.as_ref().unwrap().navigate_to(url_to_open);
-      if tab_engine.is_err() {
-        has_encountered_error = true;
-        continue;
-      }
-      
-      self.browser_tabs.push(Tab {
-        tab_engine: new_tab.unwrap().clone()
-      });
     };
 
-    if has_encountered_error { Ok(()) } else { Err(BrowserError::OpenPage) }
+    Ok(())
   }
 
-  pub fn clone(&self) -> Result<Self, BrowserError> {
-    let mut new_browser = Browser::new()?;
-    
-    let from_urls = new_browser.browser_engine.get_current_urls()
-      .map_err(|_| BrowserError::OpenBrowser)?;
+  pub fn close_page(&self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
+    match (tab_type, host_name.clone()) {
+      (TabType::Event, _) => {
+        drop(
+          self.event_tabs.get(&host_name.clone())
+            .ok_or(BrowserError::ClosePage)?
+        )
+      },
+      (TabType::Schedule, _) => {
+        drop(
+          self.schedule_tabs.get(&host_name.clone())
+            .ok_or(BrowserError::ClosePage)?
+        )
+      }
+    };
 
-    new_browser.open_pages(from_urls)?;
-
-    Ok(new_browser)
+    Ok(())
   }
 }
+
+//
+// Misc Types.
+//
+
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub enum Host {
+  Betfair
+}
+
+pub enum TabType {
+  Event,
+  Schedule,
+}
+
+//
+// End Misc Types.
+//
+
+//
+// Browser Errors.
+//
 
 #[derive(Debug)]
 pub enum BrowserError {
@@ -93,3 +134,7 @@ impl std::error::Error for BrowserError {
     }
   }
 }
+
+//
+// End Browser Errors.
+//

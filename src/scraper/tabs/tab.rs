@@ -20,7 +20,7 @@ pub trait AsTab {
     self.get_tab().tab_engine.navigate_to(target_url)
       .map_err(|_| TabError::Navigate)?;
     
-      Ok(())
+    Ok(())
   }
 
   fn refresh_page(&self) -> Result<(), TabError> {
@@ -62,8 +62,12 @@ pub trait AsTab {
   }
 }
 
+//
+// Tab Errors.
+//
+
 #[derive(Debug)]
-enum TabError {
+pub enum TabError {
   Screenshot,
   Reload,
   Evaluate,
@@ -94,3 +98,7 @@ impl std::error::Error for TabError {
     }
   }
 }
+
+//
+// End Tab Errors.
+//
