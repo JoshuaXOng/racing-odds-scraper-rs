@@ -18,8 +18,8 @@ impl AsScheduleTab for BetfairTab {
     let days_available = self.get_tab().tab_engine
       .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_rday_class).as_str());
     
-    if (
-      &nav_result).is_err() || (&schedule_tabs).is_err() || (&browser_datetime).is_err() || 
+    if 
+      (&nav_result).is_err() || (&schedule_tabs).is_err() || (&browser_datetime).is_err() || 
       days_available.as_ref().is_err() || days_available.as_ref().unwrap().get(0).is_none() ||
       days_available.as_ref().unwrap()[0].click().is_err() ||
       days_available.as_ref().unwrap().get(0).unwrap().get_inner_text().is_err() ||
