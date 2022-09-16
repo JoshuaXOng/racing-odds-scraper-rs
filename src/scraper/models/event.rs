@@ -1,10 +1,10 @@
 use std::fmt;
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, FixedOffset};
 
 pub struct Event {
   pub venue_name: String,
-  pub planned_start_time: NaiveDateTime,
+  pub planned_start_time: DateTime<FixedOffset>,
   pub has_started: bool,
 }
 

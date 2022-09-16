@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, DateTime, Timelike};
 
 use super::{betfair_tab::{BetfairTab, AsTab}, betfair_constants::{BETFAIR_CONSTANTS, BETFAIR_CSS_CONSTANTS}};
 use crate::{tabs::schedule_tab::{ScheduleTab, Event, AsScheduleTab, ScheduleTabError}, extensions::vec_extension::VecExtension};
@@ -17,6 +17,8 @@ impl AsScheduleTab for BetfairTab {
     )
       .map_err(|_| ScheduleTabError::BadScrape)?;
     
+    let browser_datetime = self.get_datetime()
+      .map_err(|_| ScheduleTabError::BadScrape)?;
     let mut event_details: Vec<Event> = vec![];
 
     schedule_tabs.iter().try_for_each(|schedule_tab| -> Result<(), ScheduleTabError> {
@@ -34,14 +36,21 @@ impl AsScheduleTab for BetfairTab {
           
           let venue_name = venue_schedule_parts.get(0);
           let event_times = &venue_schedule_parts[1..];
-
+          
           if let Some(venue_name) = venue_name {
             event_times.iter().for_each(|event_time| {
-              event_details.push(Event {
-                venue_name: String::from(*venue_name),
-                planned_start_time: NaiveDateTime::from_timestamp(100, 10),
-                has_started: true,
-              })
+              let hour_and_min = event_time.split(":").collect::<Vec<&str>>();
+              let hour = hour_and_min.get(0).map(|hour| hour.parse::<u32>());
+              let min = hour_and_min.get(1).map(|min| min.parse::<u32>());
+              if let (Some(Ok(hour)), Some(Ok(min))) = (hour, min) {
+                if let Some(browser_datetime) = browser_datetime.clone().with_hour(hour).and_then(|browser_datetime| browser_datetime.with_minute(min)) {
+                  event_details.push(Event {
+                    venue_name: String::from(*venue_name),
+                    planned_start_time: browser_datetime,
+                    has_started: true,
+                  })
+                }
+              }
             })
           }
         }
@@ -50,12 +59,6 @@ impl AsScheduleTab for BetfairTab {
       Ok(())
     })?;
 
-    dbg!(self.get_datetime());
-
-    Ok(vec![Event {
-      venue_name: String::from("sd"),
-      planned_start_time: NaiveDateTime::from_timestamp(100, 10),
-      has_started: true,
-    }])
+    Ok(event_details)
   }
 }
