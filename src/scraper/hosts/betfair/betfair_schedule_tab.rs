@@ -15,12 +15,20 @@ impl AsScheduleTab for BetfairTab {
     let schedule_tabs = self.get_tab().tab_engine
       .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_tab_class).as_str());
     let browser_datetime = self.get_datetime();
+    let days_available = self.get_tab().tab_engine
+      .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_rday_class).as_str());
     
-    if (&nav_result).is_err() || (&schedule_tabs).is_err() || (&browser_datetime).is_err() {
+    if (
+      &nav_result).is_err() || (&schedule_tabs).is_err() || (&browser_datetime).is_err() || 
+      days_available.as_ref().is_err() || days_available.as_ref().unwrap().get(0).is_none() ||
+      days_available.as_ref().unwrap()[0].click().is_err() ||
+      days_available.as_ref().unwrap().get(0).unwrap().get_inner_text().is_err() ||
+      days_available.as_ref().unwrap().get(0).unwrap().get_inner_text().unwrap() != "Today"
+    {
       return Err(ScheduleTabError::BadScrape);
     }
 
-    for schedule_tab in schedule_tabs.unwrap() {
+    for schedule_tab in &schedule_tabs.unwrap() {
       let selected_tab = schedule_tab.click();
       let venue_schedules = self.get_tab().tab_engine
         .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.venue_schedule_class).as_str());
