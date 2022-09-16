@@ -8,6 +8,12 @@ pub struct Event {
   pub has_started: bool,
 }
 
+impl Event {
+  fn is_within(&self, a: DateTime<FixedOffset>, b: u32) {
+    
+  }
+}
+
 impl fmt::Display for Event {
   fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
     write!(
