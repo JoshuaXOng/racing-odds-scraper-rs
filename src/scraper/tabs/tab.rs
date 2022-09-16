@@ -1,10 +1,9 @@
 use std::fs;
-use std::str::FromStr;
 use std::sync::Arc;
 use std::path::Path;
 
 use rand::Rng;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, FixedOffset};
 use headless_chrome::browser::tab::Tab as TabEngine;
 use headless_chrome::browser::tab::point::Point;
 use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
@@ -40,12 +39,12 @@ pub trait AsTab {
     Ok(())
   }
 
-  fn get_datetime(&self) -> Result<NaiveDateTime, TabError> {
-    let js_datetime = self.get_tab().tab_engine.evaluate("new Date()", false)
+  fn get_datetime(&self) -> Result<DateTime<FixedOffset>, TabError> {
+    let js_datetime = self.get_tab().tab_engine.evaluate("(new Date()).toUTCString()", false)
       .map_err(|_| TabError::Evaluate)?;
     
-    Ok(NaiveDateTime::from_str(
-      dbg!(js_datetime.value.ok_or(TabError::Evaluate)?.as_str().ok_or(TabError::Evaluate)?)
+    Ok(DateTime::parse_from_rfc2822(
+      js_datetime.value.ok_or(TabError::Evaluate)?.as_str().ok_or(TabError::Evaluate)?
     ).map_err(|_| TabError::Evaluate)?)
   }
 

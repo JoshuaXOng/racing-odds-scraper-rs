@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   match main_browser.schedule_tabs.get(&Host::Betfair) {
     Some(schedule_tab) => { 
       match  schedule_tab.scrape_schedule() {
-        Ok(schedule) => { println!("{}", VecExtension(schedule)); },
+        Ok(schedule) => { println!("{}", VecExtension(&schedule)); },
         _ => {},
       }
     },

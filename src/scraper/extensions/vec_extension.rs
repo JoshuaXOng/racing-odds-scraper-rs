@@ -2,9 +2,9 @@ use std::fmt;
 
 use crate::models::event::Event;
 
-pub struct VecExtension(pub Vec<Event>);
+pub struct VecExtension<'a>(pub &'a Vec<Event>);
 
-impl fmt::Display for VecExtension {
+impl<'a> fmt::Display for VecExtension<'a> {
   fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
     let mut event_vec_repr = String::from("[");
     self.0.iter().for_each(|event| {
