@@ -101,7 +101,6 @@ impl AsScheduleTab for BetfairTab {
       }
     }
 
-  
     Ok(event_details)
   }
 }
