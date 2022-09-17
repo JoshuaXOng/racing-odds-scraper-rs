@@ -2,6 +2,7 @@ use std::fmt;
 
 use chrono::{DateTime, FixedOffset};
 
+#[derive(Debug)]
 pub struct Event {
   pub venue_name: String,
   pub planned_start_time: DateTime<FixedOffset>,

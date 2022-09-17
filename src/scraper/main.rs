@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
   if let Some(schedule_tab) = main_browser.schedule_tabs.get(&Host::Betfair) {
     if let Ok(schedule) = schedule_tab.scrape_schedule() {
-      println!("{}", VecExtension(&schedule));
+      println!("{:#?}", VecExtension(&schedule));
     }
   }
   
