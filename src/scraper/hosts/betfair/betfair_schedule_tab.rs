@@ -1,4 +1,4 @@
-use chrono::Timelike;
+use chrono::{Timelike, Duration};
 use headless_chrome::Element;
 
 use super::{betfair_tab::{BetfairTab, AsTab}, betfair_constants::{BETFAIR_CONSTANTS, BETFAIR_CSS_CONSTANTS}};
@@ -39,7 +39,7 @@ impl AsScheduleTab for BetfairTab {
         }
       });
 
-      for interating_day in iterating_days {
+      for (iday_index, &interating_day) in iterating_days.iter().enumerate() {
         if let (
           Ok(_),
           Ok(schedule_tabs),
@@ -90,7 +90,7 @@ impl AsScheduleTab for BetfairTab {
           
                     event_details.push(Event {
                       venue_name: String::from(*venue_name.unwrap()),
-                      planned_start_time: event_datetime.unwrap(),
+                      planned_start_time: event_datetime.unwrap() + Duration::days(iday_index as i64),
                       has_started: true,
                     })
                   }
