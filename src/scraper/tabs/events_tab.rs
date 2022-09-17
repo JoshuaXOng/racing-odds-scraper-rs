@@ -5,16 +5,16 @@ pub use crate::models::contestant_odds::ContestantOdds;
 
 use super::tab::AsTab;
 
-pub struct EventTab {
+pub struct EventsTab {
   pub tab_engine: Arc<TabEngine>,
 }
 
-pub trait AsEventTab: AsTab {
-  fn get_event_tab(&self) -> &EventTab;
+pub trait AsEventsTab: AsTab {
+  fn get_events_tab(&self) -> &EventsTab;
 
-  fn scrape_event(&self) -> Result<Vec<ContestantOdds>, EventTabError>;
+  fn scrape_event(&self) -> Result<Vec<ContestantOdds>, EventsTabError>;
 }
 
-pub enum EventTabError {
+pub enum EventsTabError {
   BadScrape
 }

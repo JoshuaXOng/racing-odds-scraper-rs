@@ -4,12 +4,12 @@ use headless_chrome::Tab as TabEngine;
 
 pub use crate::tabs::tab::{Tab, AsTab};
 pub use crate::tabs::schedule_tab::ScheduleTab;
-pub use crate::tabs::event_tab::EventTab;
+pub use crate::tabs::events_tab::EventsTab;
 
 pub struct BetfairTab {
   pub tab: Tab,
   pub schedule_tab: ScheduleTab,
-  pub event_tab: EventTab,
+  pub events_tab: EventsTab,
 }
 
 impl BetfairTab {
@@ -17,7 +17,7 @@ impl BetfairTab {
     Self {
       tab: Tab { tab_engine: tab_engine.clone() },
       schedule_tab: ScheduleTab { tab_engine: tab_engine.clone() },
-      event_tab: EventTab { tab_engine: tab_engine.clone() },
+      events_tab: EventsTab { tab_engine: tab_engine.clone() },
     }
   }    
 }

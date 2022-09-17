@@ -4,12 +4,12 @@ use std::hash::Hash;
 use headless_chrome::LaunchOptionsBuilder;
 use headless_chrome::browser::Browser as BrowserEngine;
 use crate::hosts::betfair::betfair_tab::BetfairTab;
-use crate::tabs::event_tab::AsEventTab;
+use crate::tabs::events_tab::AsEventsTab;
 use crate::tabs::schedule_tab::AsScheduleTab;
 
 pub struct Browser {
   pub browser_engine: BrowserEngine,
-  pub event_tabs: HashMap<Host, Box<dyn AsEventTab>>,
+  pub events_tabs: HashMap<Host, Box<dyn AsEventsTab>>,
   pub schedule_tabs: HashMap<Host, Box<dyn AsScheduleTab>>,
 }
 
@@ -27,7 +27,7 @@ impl Browser {
     
     Ok(Self {
       browser_engine,
-      event_tabs: HashMap::from([]),
+      events_tabs: HashMap::from([]),
       schedule_tabs: HashMap::from([]),
     })
   }
@@ -35,14 +35,14 @@ impl Browser {
   pub fn open_page(&mut self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
     match (tab_type, host_name.clone()) {
       (TabType::Event, _) => {
-        let tab = self.event_tabs.get(&host_name.clone());
+        let tab = self.events_tabs.get(&host_name.clone());
         if (tab.is_some()) { 
           return Ok(()); 
         };
         
         match (self.browser_engine.new_tab(), host_name.clone()) {
           (Err(_), _) => Err(BrowserError::OpenPage)?,
-          (Ok(tab_engine), Host::Betfair) => self.event_tabs
+          (Ok(tab_engine), Host::Betfair) => self.events_tabs
             .insert(host_name.clone(), Box::new(BetfairTab::new(tab_engine)))
         };
       },
@@ -67,7 +67,7 @@ impl Browser {
     match (tab_type, host_name.clone()) {
       (TabType::Event, _) => {
         drop(
-          self.event_tabs.get(&host_name.clone())
+          self.events_tabs.get(&host_name.clone())
             .ok_or(BrowserError::ClosePage)?
         )
       },
