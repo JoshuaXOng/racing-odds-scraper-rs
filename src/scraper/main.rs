@@ -15,11 +15,11 @@ fn main() -> Result<(), Box<dyn Error>> {
   let mut main_browser = Browser::new()?;
   main_browser.open_page((TabType::Schedule, Host::Betfair))?;
 
-  if let Some(schedule_tab) = main_browser.schedule_tabs.get(&Host::Betfair) {
-    if let Ok(schedule) = schedule_tab.scrape_schedule() {
-      println!("{:#?}", VecExtension(&schedule));
-    }
-  }
+  // if let Some(schedule_tab) = main_browser.schedule_tabs.get(&Host::Betfair) {
+  //   if let Ok(schedule) = schedule_tab.scrape_schedule() {
+  //     println!("{:#?}", VecExtension(&schedule));
+  //   }
+  // }
   
   Ok(())
 }

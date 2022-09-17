@@ -2,6 +2,7 @@ use std::fs;
 use std::sync::Arc;
 use std::path::Path;
 
+use headless_chrome::protocol::cdp::DOM::Node;
 use rand::Rng;
 use chrono::{DateTime, FixedOffset};
 use headless_chrome::browser::tab::Tab as TabEngine;
@@ -46,6 +47,17 @@ pub trait AsTab {
     Ok(DateTime::parse_from_rfc2822(
       js_datetime.value.ok_or(TabError::Evaluate)?.as_str().ok_or(TabError::Evaluate)?
     ).map_err(|_| TabError::Evaluate)?)
+  }
+
+  fn for_each_node(&self, node: &Node, callback: &mut dyn FnMut(&Node) -> ()) {
+    callback(&node);
+
+    let children = if let Some(children) = &node.children
+    { children } else { return () };
+  
+    for child in children {
+      self.for_each_node(&child, callback);
+    }
   }
 
   fn fake_mouse_movement(&self) -> Result<(), TabError> {
