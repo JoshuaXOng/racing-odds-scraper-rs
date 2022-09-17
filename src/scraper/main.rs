@@ -22,7 +22,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
   }
   
-  sleep(time::Duration::from_millis(1000*10));
-
   Ok(())
 }
