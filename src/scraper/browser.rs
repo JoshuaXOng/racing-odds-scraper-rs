@@ -36,7 +36,7 @@ impl Browser {
     match (tab_type, host_name.clone()) {
       (TabType::Event, _) => {
         let tab = self.events_tabs.get(&host_name.clone());
-        if (tab.is_some()) { 
+        if tab.is_some() { 
           return Ok(()); 
         };
         
@@ -48,7 +48,7 @@ impl Browser {
       },
       (TabType::Schedule, _) => {
         let tab = self.schedule_tabs.get(&host_name.clone());
-        if (tab.is_some()) { 
+        if tab.is_some() { 
           return Ok(()); 
         };
         

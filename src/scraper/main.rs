@@ -1,5 +1,4 @@
-use core::time;
-use std::{error::Error, thread::sleep};
+use std::error::Error;
 
 use browser::{Browser, TabType, Host};
 
