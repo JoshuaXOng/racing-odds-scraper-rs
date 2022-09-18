@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, FixedOffset};
-use headless_chrome::protocol::cdp::DOM::Node;
+use headless_chrome::protocol::cdp::DOM::{Node, self};
 use headless_chrome::{Tab as TabEngine, Element};
 
+use crate::extensions::rhc_extensions::create_element_from_bnid;
 pub use crate::tabs::tab::{Tab, AsTab};
 pub use crate::tabs::schedule_tab::ScheduleTab;
 pub use crate::tabs::events_tab::EventsTab;
@@ -25,7 +26,7 @@ impl BetfairTab {
     }
   }    
 
-  fn loop_schedule_items(&self, callback: &dyn Fn(DateTime<FixedOffset>, &Element, &Element, &Element, &Element) -> ()) -> Result<(), ()> {
+  pub fn loop_schedule_items(&self, callback: &mut dyn FnMut(DateTime<FixedOffset>, &Element, &Element, &Element, &Element) -> ()) -> Result<(), ()> {
     self.goto_url(BETFAIR_CONSTANTS.racing_url)
       .or(Err(()))?;
 
@@ -75,7 +76,7 @@ impl BetfairTab {
         {
           let venue_schedule = if let Ok(venue_schedule) = venue_schedule.get_description() 
           { venue_schedule } else { continue };
-          
+
           let mut venue_name = None as Option<Node>;
           let mut venue_events = vec![] as Vec<Node>;
           self.for_each_node(
@@ -100,15 +101,25 @@ impl BetfairTab {
               }
             }
           );
-
+          
           let venue_name = if let Some(venue_name) = venue_name { 
-            if let Ok(venue_name) = Element::new(self.get_tab().tab_engine.as_ref(), venue_name.node_id)
-            { venue_name } else { continue }
+            create_element_from_bnid(
+              self
+                .get_tab()
+                .tab_engine
+                .as_ref(), 
+              venue_name.backend_node_id
+            )?
           } else { continue };
           
           for venue_event in venue_events {
-            let venue_event = if let Ok(venue_event) = Element::new(self.get_tab().tab_engine.as_ref(), venue_event.node_id)
-            { venue_event } else { continue };
+            let venue_event = create_element_from_bnid(
+              self
+                .get_tab()
+                .tab_engine
+                .as_ref(), 
+              venue_event.backend_node_id
+            )?;
 
             callback(browser_datetime, interating_day, schedule_tab, &venue_name, &venue_event);
           }

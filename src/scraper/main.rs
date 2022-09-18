@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use browser::{Browser, TabType, Host};
+use chrono::DateTime;
 
 use crate::extensions::vec_extension::VecExtension;
 
@@ -13,13 +14,13 @@ mod extensions;
 
 fn main() -> Result<(), Box<dyn Error>> {
   let mut main_browser = Browser::new()?;
-  main_browser.open_page((TabType::Schedule, Host::Betfair))?;
+  main_browser.open_page((TabType::Events, Host::Betfair))?;
 
-  // if let Some(schedule_tab) = main_browser.schedule_tabs.get(&Host::Betfair) {
-  //   if let Ok(schedule) = schedule_tab.scrape_schedule() {
-  //     println!("{:#?}", VecExtension(&schedule));
-  //   }
-  // }
+  if let Some(events_tabs) = main_browser.events_tabs.get(&Host::Betfair) {
+    if let Ok(odds) = events_tabs.scrape_event() {
+      println!("{:#?}", &odds);
+    }
+  }
   
   Ok(())
 }

@@ -34,7 +34,7 @@ impl Browser {
 
   pub fn open_page(&mut self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
     match (tab_type, host_name.clone()) {
-      (TabType::Event, _) => {
+      (TabType::Events, _) => {
         let tab = self.events_tabs.get(&host_name.clone());
         if tab.is_some() { 
           return Ok(()); 
@@ -65,7 +65,7 @@ impl Browser {
 
   pub fn close_page(&self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
     match (tab_type, host_name.clone()) {
-      (TabType::Event, _) => {
+      (TabType::Events, _) => {
         drop(
           self.events_tabs.get(&host_name.clone())
             .ok_or(BrowserError::ClosePage)?
@@ -93,7 +93,7 @@ pub enum Host {
 }
 
 pub enum TabType {
-  Event,
+  Events,
   Schedule,
 }
 
