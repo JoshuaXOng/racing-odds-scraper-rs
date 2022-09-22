@@ -1,28 +1,36 @@
-use std::sync::Arc;
-use chrono::{FixedOffset, DateTime};
+use chrono::{DateTime, FixedOffset};
 use headless_chrome::browser::tab::Tab as TabEngine;
+use std::sync::Arc;
 
 pub use crate::models::contestant_odds::ContestantOdds;
 
-use super::tab::AsTab;
+use super::tab::{AsTab, Tab};
 
 pub struct EventsTab {
-  pub tab_engine: Arc<TabEngine>,
+    pub tab: Tab,
 }
 
 pub trait AsEventsTab: AsTab {
-  fn get_events_tab(&self) -> &EventsTab;
+    fn get_events_tab(&self) -> &EventsTab;
 
-  fn scrape_event(&self, venue_name: &str, event_time: DateTime<FixedOffset>) -> Result<Vec<ContestantOdds>, EventsTabError>;
+    fn scrape_event(
+        &self,
+        venue_name: &str,
+        event_time: DateTime<FixedOffset>,
+    ) -> Result<Vec<ContestantOdds>, EventsTabError>;
 }
 
 #[derive(Debug)]
 pub enum EventsTabError {
-  BadScrape
+    BadScrape,
 }
 
 impl EventsTab {
-  pub fn new(tab_engine: Arc<TabEngine>) -> Self {
-    Self { tab_engine }
-  }
+    pub fn new(tab_engine: Arc<TabEngine>) -> Self {
+        Self {
+            tab: Tab {
+                tab_engine: tab_engine,
+            },
+        }
+    }
 }

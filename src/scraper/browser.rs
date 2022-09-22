@@ -1,88 +1,93 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-use headless_chrome::LaunchOptionsBuilder;
-use headless_chrome::browser::Browser as BrowserEngine;
 use crate::hosts::betfair::betfair_event_tab::BetfairEventsTab;
 use crate::hosts::betfair::betfair_schedule_tab::BetfairScheduleTab;
-use crate::hosts::betfair::betfair_tab::BetfairTab;
 use crate::tabs::events_tab::AsEventsTab;
 use crate::tabs::schedule_tab::AsScheduleTab;
+use headless_chrome::browser::Browser as BrowserEngine;
+use headless_chrome::LaunchOptionsBuilder;
 
 pub struct Browser {
-  pub browser_engine: BrowserEngine,
-  pub events_tabs: HashMap<Host, Box<dyn AsEventsTab>>,
-  pub schedule_tabs: HashMap<Host, Box<dyn AsScheduleTab>>,
+    pub browser_engine: BrowserEngine,
+    pub events_tabs: HashMap<Host, Box<dyn AsEventsTab>>,
+    pub schedule_tabs: HashMap<Host, Box<dyn AsScheduleTab>>,
 }
 
 impl Browser {
-  pub fn new() -> Result<Self, BrowserError> {
-    let browser_options = LaunchOptionsBuilder::default()
-      .headless(false)
-      .build()
-      .map_err(|_| BrowserError::OpenBrowser)?;
+    pub fn new() -> Result<Self, BrowserError> {
+        let browser_options = LaunchOptionsBuilder::default()
+            .headless(false)
+            .build()
+            .or(Err(BrowserError::General))?;
 
-    let browser_engine = BrowserEngine::new(browser_options)
-      .map_err(|_| BrowserError::OpenBrowser)?;
-    browser_engine.wait_for_initial_tab()
-      .map_err(|_| BrowserError::OpenBrowser)?;
-    
-    Ok(Self {
-      browser_engine,
-      events_tabs: HashMap::from([]),
-      schedule_tabs: HashMap::from([]),
-    })
-  }
+        let browser_engine = BrowserEngine::new(browser_options).or(Err(BrowserError::General))?;
 
-  pub fn open_page(&mut self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
-    match (tab_type, host_name.clone()) {
-      (TabType::Events, _) => {
-        let tab = self.events_tabs.get(&host_name.clone());
-        if tab.is_some() { 
-          return Ok(()); 
+        browser_engine
+            .wait_for_initial_tab()
+            .or(Err(BrowserError::General))?;
+
+        Ok(Self {
+            browser_engine,
+            events_tabs: HashMap::from([]),
+            schedule_tabs: HashMap::from([]),
+        })
+    }
+
+    pub fn open_page(&mut self, (tab_type, host): (TabType, Host)) -> Result<(), BrowserError> {
+        let tab_engine = if let Ok(tab_engine) = self.browser_engine.new_tab() {
+            tab_engine
+        } else {
+            Err(BrowserError::General)?
         };
-        
-        match (self.browser_engine.new_tab(), host_name.clone()) {
-          (Err(_), _) => Err(BrowserError::OpenPage)?,
-          (Ok(tab_engine), Host::Betfair) => self.events_tabs
-            .insert(host_name.clone(), Box::new(BetfairEventsTab::new(tab_engine)))
-        };
-      },
-      (TabType::Schedule, _) => {
-        let tab = self.schedule_tabs.get(&host_name.clone());
-        if tab.is_some() { 
-          return Ok(()); 
-        };
-        
-        match (self.browser_engine.new_tab(), host_name.clone()) {
-        (Err(_), _) => Err(BrowserError::OpenPage)?,
-        (Ok(tab_engine), Host::Betfair) => self.schedule_tabs
-          .insert(host_name.clone(), Box::new(BetfairScheduleTab::new(tab_engine)))
-        };
-      }
-    };
 
-    Ok(())
-  }
+        match tab_type {
+            TabType::Events => {
+                let tab = self.events_tabs.get(&host.clone());
+                if tab.is_some() {
+                    return Ok(());
+                };
 
-  pub fn close_page(&self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
-    match (tab_type, host_name.clone()) {
-      (TabType::Events, _) => {
-        drop(
-          self.events_tabs.get(&host_name.clone())
-            .ok_or(BrowserError::ClosePage)?
-        )
-      },
-      (TabType::Schedule, _) => {
-        drop(
-          self.schedule_tabs.get(&host_name.clone())
-            .ok_or(BrowserError::ClosePage)?
-        )
-      }
-    };
+                match host.clone() {
+                    Host::Betfair => self
+                        .events_tabs
+                        .insert(host.clone(), Box::new(BetfairEventsTab::new(tab_engine))),
+                };
+            }
+            TabType::Schedule => {
+                let tab = self.schedule_tabs.get(&host.clone());
+                if tab.is_some() {
+                    return Ok(());
+                };
 
-    Ok(())
-  }
+                match host.clone() {
+                    Host::Betfair => self
+                        .schedule_tabs
+                        .insert(host.clone(), Box::new(BetfairScheduleTab::new(tab_engine))),
+                };
+            }
+        };
+
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn close_page(&self, (tab_type, host_name): (TabType, Host)) -> Result<(), BrowserError> {
+        match (tab_type, host_name.clone()) {
+            (TabType::Events, _) => drop(
+                self.events_tabs
+                    .get(&host_name.clone())
+                    .ok_or(BrowserError::General)?,
+            ),
+            (TabType::Schedule, _) => drop(
+                self.schedule_tabs
+                    .get(&host_name.clone())
+                    .ok_or(BrowserError::General)?,
+            ),
+        };
+
+        Ok(())
+    }
 }
 
 //
@@ -91,12 +96,13 @@ impl Browser {
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum Host {
-  Betfair
+    Betfair,
 }
 
+#[allow(dead_code)]
 pub enum TabType {
-  Events,
-  Schedule,
+    Events,
+    Schedule,
 }
 
 //
@@ -109,38 +115,29 @@ pub enum TabType {
 
 #[derive(Debug)]
 pub enum BrowserError {
-  OpenBrowser,
-  ReadInfo,
-  OpenPage,
-  ClosePage,
+    General,
 }
 
 impl std::fmt::Display for BrowserError {
-  fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    match *self {
-      BrowserError::OpenBrowser => write!(formatter, "Failed to create new browser instance."),
-      BrowserError::ReadInfo => write!(formatter, "Failed to read information form browser"),
-      BrowserError::OpenPage => write!(formatter, "Failed to open a new page instance."),
-      BrowserError::ClosePage => write!(formatter, "Failed to close a new page instance."),
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            BrowserError::General => write!(formatter, "Browser operation failed."),
+        }
     }
-  }
 }
 
 impl std::error::Error for BrowserError {
-  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-    match *self {
-      BrowserError::OpenBrowser => None,
-      BrowserError::ReadInfo => None,
-      BrowserError::OpenPage => None,
-      BrowserError::ClosePage => None,
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            BrowserError::General => None,
+        }
     }
-  }
 }
 
 impl From<String> for BrowserError {
-  fn from(_: String) -> Self {
-    BrowserError::OpenBrowser
-  }
+    fn from(_: String) -> Self {
+        BrowserError::General
+    }
 }
 
 //
