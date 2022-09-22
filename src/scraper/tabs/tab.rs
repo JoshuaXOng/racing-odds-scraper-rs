@@ -49,17 +49,6 @@ pub trait AsTab {
     ).map_err(|_| TabError::Evaluate)?)
   }
 
-  fn for_each_node(&self, node: &Node, callback: &mut dyn FnMut(&Node) -> ()) {
-    callback(&node);
-
-    let children = if let Some(children) = &node.children
-    { children } else { return () };
-  
-    for child in children {
-      self.for_each_node(&child, callback);
-    }
-  }
-
   fn fake_mouse_movement(&self) -> Result<(), TabError> {
     let tab_bounds = self.get_tab().tab_engine.get_bounds()
       .map_err(|_| TabError::Action)?;

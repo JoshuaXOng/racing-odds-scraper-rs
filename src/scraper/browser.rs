@@ -3,6 +3,8 @@ use std::hash::Hash;
 
 use headless_chrome::LaunchOptionsBuilder;
 use headless_chrome::browser::Browser as BrowserEngine;
+use crate::hosts::betfair::betfair_event_tab::BetfairEventsTab;
+use crate::hosts::betfair::betfair_schedule_tab::BetfairScheduleTab;
 use crate::hosts::betfair::betfair_tab::BetfairTab;
 use crate::tabs::events_tab::AsEventsTab;
 use crate::tabs::schedule_tab::AsScheduleTab;
@@ -43,7 +45,7 @@ impl Browser {
         match (self.browser_engine.new_tab(), host_name.clone()) {
           (Err(_), _) => Err(BrowserError::OpenPage)?,
           (Ok(tab_engine), Host::Betfair) => self.events_tabs
-            .insert(host_name.clone(), Box::new(BetfairTab::new(tab_engine)))
+            .insert(host_name.clone(), Box::new(BetfairEventsTab::new(tab_engine)))
         };
       },
       (TabType::Schedule, _) => {
@@ -55,7 +57,7 @@ impl Browser {
         match (self.browser_engine.new_tab(), host_name.clone()) {
         (Err(_), _) => Err(BrowserError::OpenPage)?,
         (Ok(tab_engine), Host::Betfair) => self.schedule_tabs
-          .insert(host_name.clone(), Box::new(BetfairTab::new(tab_engine)))
+          .insert(host_name.clone(), Box::new(BetfairScheduleTab::new(tab_engine)))
         };
       }
     };
@@ -132,6 +134,12 @@ impl std::error::Error for BrowserError {
       BrowserError::OpenPage => None,
       BrowserError::ClosePage => None,
     }
+  }
+}
+
+impl From<String> for BrowserError {
+  fn from(_: String) -> Self {
+    BrowserError::OpenBrowser
   }
 }
 

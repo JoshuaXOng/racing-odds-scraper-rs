@@ -13,30 +13,17 @@ mod browser;
 mod extensions;
 
 fn main() -> Result<(), Box<dyn Error>> {
-  let handler = thread::spawn(|| {
-    let mut main_browser = Browser::new().unwrap();
-    main_browser.open_page((TabType::Events, Host::Betfair)).unwrap();
-  
-    if let Some(events_tabs) = main_browser.events_tabs.get(&Host::Betfair) {
-      if let Ok(odds) = events_tabs.scrape_event() {
-        println!("{:#?}", &odds);
-      }
-    }
-  });
+  let mut main_browser = Browser::new().unwrap();
+  main_browser.open_page((TabType::Events, Host::Betfair)).unwrap();
+  main_browser.open_page((TabType::Schedule, Host::Betfair)).unwrap();
 
-  let handler2 = thread::spawn(|| {
-    let mut main_browser = Browser::new().unwrap();
-    main_browser.open_page((TabType::Events, Host::Betfair)).unwrap();
+  if let Some(events_tab) = main_browser.events_tabs.get(&Host::Betfair) {
+    println!("{:?}", events_tab.scrape_event("sad", DateTime::parse_from_str("2022 Apr 13 12:09:14.274 +0000", "%Y %b %d %H:%M:%S%.3f %z").unwrap()).unwrap());
+  }
   
-    if let Some(events_tabs) = main_browser.events_tabs.get(&Host::Betfair) {
-      if let Ok(odds) = events_tabs.scrape_event() {
-        println!("{:#?}", &odds);
-      }
-    }
-  });
-
-  handler.join().unwrap();
-  handler2.join().unwrap();
+  // if let Some(schedule_tab) = main_browser.schedule_tabs.get(&Host::Betfair) {
+  //   println!("{:?}", schedule_tab.scrape_schedule().unwrap());
+  // }
   
   Ok(())
 }

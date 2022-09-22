@@ -1,4 +1,4 @@
-use headless_chrome::{Element, Tab, protocol::cdp::DOM};
+use headless_chrome::{Element, Tab, protocol::cdp::DOM::{self, Node}};
 
 pub fn create_element_from_bnid(tab_engine: &Tab, backend_node_id: u32) -> Result<Element, ()> {
   let object = tab_engine
@@ -20,4 +20,29 @@ pub fn create_element_from_bnid(tab_engine: &Tab, backend_node_id: u32) -> Resul
     node_id: 0,
     parent: tab_engine,
   })
+}
+
+pub fn is_node_of_class(node: &Node, class: &str) -> bool {
+  let attributes = node.attributes.clone().unwrap_or(vec![]);
+  
+  let c_attr_key_index = if let Some(c_attr_index) = attributes.iter().position(|attribute| attribute == "class")
+  { c_attr_index } else { return false };
+
+  let c_attr_value_index = c_attr_key_index + 1;
+
+  let c_attr_value = if let Some(c_attr_value) = attributes.get(c_attr_value_index)
+  { c_attr_value } else { return false };
+
+  c_attr_value.contains(class)
+}
+
+pub fn for_each_node(node: &Node, callback: &mut dyn FnMut(&Node) -> ()) {
+  callback(&node);
+
+  let children = if let Some(children) = &node.children
+  { children } else { return () };
+
+  for child in children {
+    for_each_node(&child, callback);
+  }
 }
