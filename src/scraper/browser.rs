@@ -35,18 +35,17 @@ impl Browser {
     }
 
     pub fn open_page(&mut self, (tab_type, host): (TabType, Host)) -> Result<(), BrowserError> {
-        let tab_engine = if let Ok(tab_engine) = self.browser_engine.new_tab() {
-            tab_engine
-        } else {
-            Err(BrowserError::General)?
+        let tab_engine = match self.browser_engine.new_tab() {
+            Ok(tab_engine) => tab_engine,
+            _ => Err(BrowserError::General)?,
         };
+        tab_engine.set_default_timeout(std::time::Duration::from_secs(10));
 
         match tab_type {
             TabType::Events => {
-                let tab = self.events_tabs.get(&host.clone());
-                if tab.is_some() {
+                if let Some(_) = self.events_tabs.get(&host.clone()) {
                     return Ok(());
-                };
+                }
 
                 match host.clone() {
                     Host::Betfair => self
@@ -55,10 +54,9 @@ impl Browser {
                 };
             }
             TabType::Schedule => {
-                let tab = self.schedule_tabs.get(&host.clone());
-                if tab.is_some() {
+                if let Some(_) = self.schedule_tabs.get(&host.clone()) {
                     return Ok(());
-                };
+                }
 
                 match host.clone() {
                     Host::Betfair => self
@@ -91,7 +89,7 @@ impl Browser {
 }
 
 //
-// Misc Types.
+// Miscellaneous Items.
 //
 
 #[derive(PartialEq, Eq, Hash, Clone)]
@@ -106,7 +104,7 @@ pub enum TabType {
 }
 
 //
-// End Misc Types.
+// End Miscellaneous Items.
 //
 
 //

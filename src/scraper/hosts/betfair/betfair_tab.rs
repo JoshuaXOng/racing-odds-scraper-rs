@@ -23,9 +23,7 @@ impl AsTab for BetfairTab {
 impl BetfairTab {
     pub fn new(tab_engine: Arc<TabEngine>) -> Self {
         Self {
-            tab: Tab {
-                tab_engine: tab_engine,
-            },
+            tab: Tab { tab_engine },
         }
     }
 }

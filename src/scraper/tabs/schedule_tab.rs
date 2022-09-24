@@ -16,11 +16,6 @@ pub trait AsScheduleTab: AsTab {
     fn scrape_schedule(&self) -> Result<Vec<Event>, ScheduleTabError>;
 }
 
-#[derive(Debug)]
-pub enum ScheduleTabError {
-    BadScrape,
-}
-
 impl ScheduleTab {
     pub fn new(tab_engine: Arc<TabEngine>) -> Self {
         Self {
@@ -30,3 +25,33 @@ impl ScheduleTab {
         }
     }
 }
+
+//
+// Schedule Tab Errors.
+//
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub enum ScheduleTabError {
+    General(Option<Box<dyn std::error::Error + 'static>>, String),
+}
+
+impl std::fmt::Display for ScheduleTabError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ScheduleTabError::General(_, message) => write!(formatter, "{}", message),
+        }
+    }
+}
+
+impl std::error::Error for ScheduleTabError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ScheduleTabError::General(source, _) => source.as_deref(),
+        }
+    }
+}
+
+//
+// End Schedule Tab Errors.
+//

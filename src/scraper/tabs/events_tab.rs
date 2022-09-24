@@ -20,11 +20,6 @@ pub trait AsEventsTab: AsTab {
     ) -> Result<Vec<ContestantOdds>, EventsTabError>;
 }
 
-#[derive(Debug)]
-pub enum EventsTabError {
-    BadScrape,
-}
-
 impl EventsTab {
     pub fn new(tab_engine: Arc<TabEngine>) -> Self {
         Self {
@@ -34,3 +29,32 @@ impl EventsTab {
         }
     }
 }
+
+//
+// Events Tab Errors.
+//
+
+#[derive(Debug)]
+pub enum EventsTabError {
+    General(Option<Box<dyn std::error::Error + 'static>>, String),
+}
+
+impl std::fmt::Display for EventsTabError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            EventsTabError::General(_, message) => write!(formatter, "{}", message),
+        }
+    }
+}
+
+impl std::error::Error for EventsTabError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            EventsTabError::General(source, _) => source.as_deref(),
+        }
+    }
+}
+
+//
+// End Events Tab Errors.
+//

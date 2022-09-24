@@ -42,14 +42,17 @@ impl AsEventsTab for BetfairEventsTab {
         venue_name: &str,
         event_time: DateTime<FixedOffset>,
     ) -> Result<Vec<ContestantOdds>, EventsTabError> {
-        let event_links = self
-            .schedule_tab
-            .get_event_links()
-            .or(Err(EventsTabError::BadScrape))?;
+        let event_links = self.schedule_tab.get_event_links().map_err(|error| {
+            EventsTabError::General(
+                Some(Box::new(error)),
+                String::from("Could not get event links from schedule."),
+            )
+        })?;
 
-        let v_event_links = event_links
-            .get(venue_name)
-            .ok_or(EventsTabError::BadScrape)?;
+        let v_event_links = event_links.get(venue_name).ok_or(EventsTabError::General(
+            None,
+            String::from("Could not key venue specific event links from schedule."),
+        ))?;
 
         let v_event_link = v_event_links
             .iter()
@@ -57,10 +60,15 @@ impl AsEventsTab for BetfairEventsTab {
                 v_event_link.event_datetime - Duration::minutes(2) <= event_time
                     && v_event_link.event_datetime + Duration::minutes(2) >= event_time
             })
-            .ok_or(EventsTabError::BadScrape)?;
+            .ok_or(EventsTabError::General(None, String::from("")))?;
 
         self.goto_url(v_event_link.navigation_link.as_str())
-            .or(Err(EventsTabError::BadScrape))?;
+            .map_err(|error| {
+                EventsTabError::General(
+                    Some(Box::new(error)),
+                    String::from("Could not navigate to the event's url."),
+                )
+            })?;
 
         let mut contestant_odds = vec![];
 
@@ -70,13 +78,14 @@ impl AsEventsTab for BetfairEventsTab {
             .wait_for_elements(
                 format!(".{}", BETFAIR_CSS_CONSTANTS.contestant_entry_class).as_str(),
             )
-            .or(Err(EventsTabError::BadScrape))?;
-
+            .or(Err(EventsTabError::General(
+                None,
+                String::from("Could not scrape contestant entries from betting table."),
+            )))?;
         for contestant_entry in contestant_entries {
-            let c_entry_node = if let Ok(c_entry_node) = contestant_entry.get_description() {
-                c_entry_node.to_owned()
-            } else {
-                continue;
+            let c_entry_node = match contestant_entry.get_description() {
+                Ok(c_entry_node) => c_entry_node.to_owned(),
+                _ => continue,
             };
 
             let mut contestant_name = None as Option<String>;
@@ -94,13 +103,14 @@ impl AsEventsTab for BetfairEventsTab {
                 let is_back_button = is_node_of_class(node, "back-button");
                 let is_lay_button = is_node_of_class(node, "lay-button");
                 if is_back_button || is_lay_button {
-                    let entry_text = if let Ok(entry_text) =
-                        create_element_from_bnid(&self.get_tab().tab_engine, node.backend_node_id)
-                            .and_then(|entry| entry.get_inner_text().or(Err(())))
+                    let entry_text = match create_element_from_bnid(
+                        &self.get_tab().tab_engine,
+                        node.backend_node_id,
+                    )
+                    .and_then(|entry| entry.get_inner_text().or(Err(())))
                     {
-                        entry_text
-                    } else {
-                        return;
+                        Ok(entry_text) => entry_text,
+                        _ => return,
                     };
 
                     let odds_and_money = entry_text.split_whitespace().collect::<Vec<_>>();
@@ -108,10 +118,9 @@ impl AsEventsTab for BetfairEventsTab {
                     let back_money = odds_and_money.get(1);
 
                     if let (Some(&odds), Some(&money)) = (back_odds, back_money) {
-                        let entry_container = if is_back_button {
-                            &mut back_entries
-                        } else {
-                            &mut lay_entries
+                        let entry_container = match is_back_button {
+                            true => &mut back_entries,
+                            false => &mut lay_entries,
                         };
                         if let Ok(odds) = (odds, money).try_into() as Result<Odds, ()> {
                             entry_container.push(odds);
