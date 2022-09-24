@@ -50,7 +50,7 @@ pub trait AsTab {
             .evaluate("(new Date()).toUTCString()", false)
             .or(Err(TabError::General))?;
 
-        Ok(DateTime::parse_from_rfc2822(
+        let browser_datetime = DateTime::parse_from_rfc2822(
             js_datetime
                 .value
                 .ok_or(TabError::General)?
@@ -58,7 +58,9 @@ pub trait AsTab {
                 .ok_or(TabError::General)?,
         )
         .map(|datetime| datetime.with_timezone(&FixedOffset::east(10 * 60 * 60)))
-        .or(Err(TabError::General))?)
+        .or(Err(TabError::General))?;
+
+        Ok(browser_datetime)
     }
 }
 

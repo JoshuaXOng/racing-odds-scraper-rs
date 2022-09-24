@@ -28,7 +28,7 @@ impl AsBetfairTab for BetfairEventsTab {
 
 impl AsTab for BetfairEventsTab {
     fn get_tab(&self) -> &Tab {
-        &self.betfair_tab.get_tab()
+        self.betfair_tab.get_tab()
     }
 }
 
@@ -49,7 +49,7 @@ impl AsEventsTab for BetfairEventsTab {
             )
         })?;
 
-        let v_event_links = event_links.get(venue_name).ok_or(EventsTabError::General(
+        let v_event_links = event_links.get(venue_name).ok_or_else(|| EventsTabError::General(
             None,
             String::from("Could not key venue specific event links from schedule."),
         ))?;
@@ -60,7 +60,7 @@ impl AsEventsTab for BetfairEventsTab {
                 v_event_link.event_datetime - Duration::minutes(2) <= event_time
                     && v_event_link.event_datetime + Duration::minutes(2) >= event_time
             })
-            .ok_or(EventsTabError::General(None, String::from("")))?;
+            .ok_or_else(|| EventsTabError::General(None, String::from("Could not get link to event.")))?;
 
         self.goto_url(v_event_link.navigation_link.as_str())
             .map_err(|error| {
@@ -78,10 +78,10 @@ impl AsEventsTab for BetfairEventsTab {
             .wait_for_elements(
                 format!(".{}", BETFAIR_CSS_CONSTANTS.contestant_entry_class).as_str(),
             )
-            .or(Err(EventsTabError::General(
+            .map_err(|_| EventsTabError::General(
                 None,
                 String::from("Could not scrape contestant entries from betting table."),
-            )))?;
+            ))?;
         for contestant_entry in contestant_entries {
             let c_entry_node = match contestant_entry.get_description() {
                 Ok(c_entry_node) => c_entry_node.to_owned(),
@@ -96,8 +96,7 @@ impl AsEventsTab for BetfairEventsTab {
                     contestant_name =
                         create_element_from_bnid(&self.get_tab().tab_engine, node.backend_node_id)
                             .and_then(|a| a.get_inner_text().or(Err(())))
-                            .ok()
-                            .map(|contestant_name| contestant_name);
+                            .ok();
                 }
 
                 let is_back_button = is_node_of_class(node, "back-button");
@@ -114,7 +113,7 @@ impl AsEventsTab for BetfairEventsTab {
                     };
 
                     let odds_and_money = entry_text.split_whitespace().collect::<Vec<_>>();
-                    let back_odds = odds_and_money.get(0);
+                    let back_odds = odds_and_money.first();
                     let back_money = odds_and_money.get(1);
 
                     if let (Some(&odds), Some(&money)) = (back_odds, back_money) {
@@ -131,7 +130,7 @@ impl AsEventsTab for BetfairEventsTab {
 
             if let Some(contestant_name) = contestant_name {
                 contestant_odds.push(ContestantOdds {
-                    contestant_name: contestant_name,
+                    contestant_name,
                     backing_odds: back_entries,
                     laying_odds: lay_entries,
                 })
@@ -147,7 +146,7 @@ impl BetfairEventsTab {
         Self {
             betfair_tab: BetfairTab::new(tab_engine.clone()),
             events_tab: EventsTab::new(tab_engine.clone()),
-            schedule_tab: BetfairScheduleTab::new(tab_engine.clone()),
+            schedule_tab: BetfairScheduleTab::new(tab_engine),
         }
     }
 }

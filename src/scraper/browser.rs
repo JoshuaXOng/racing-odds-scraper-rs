@@ -43,25 +43,25 @@ impl Browser {
 
         match tab_type {
             TabType::Events => {
-                if let Some(_) = self.events_tabs.get(&host.clone()) {
+                if self.events_tabs.get(&host).is_some() {
                     return Ok(());
                 }
 
-                match host.clone() {
+                match host {
                     Host::Betfair => self
                         .events_tabs
-                        .insert(host.clone(), Box::new(BetfairEventsTab::new(tab_engine))),
+                        .insert(host, Box::new(BetfairEventsTab::new(tab_engine))),
                 };
             }
             TabType::Schedule => {
-                if let Some(_) = self.schedule_tabs.get(&host.clone()) {
+                if self.schedule_tabs.get(&host).is_some() {
                     return Ok(());
                 }
 
-                match host.clone() {
+                match host {
                     Host::Betfair => self
                         .schedule_tabs
-                        .insert(host.clone(), Box::new(BetfairScheduleTab::new(tab_engine))),
+                        .insert(host, Box::new(BetfairScheduleTab::new(tab_engine))),
                 };
             }
         };
@@ -74,12 +74,12 @@ impl Browser {
         match (tab_type, host_name.clone()) {
             (TabType::Events, _) => drop(
                 self.events_tabs
-                    .get(&host_name.clone())
+                    .get(&host_name)
                     .ok_or(BrowserError::General)?,
             ),
             (TabType::Schedule, _) => drop(
                 self.schedule_tabs
-                    .get(&host_name.clone())
+                    .get(&host_name)
                     .ok_or(BrowserError::General)?,
             ),
         };

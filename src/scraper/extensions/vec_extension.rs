@@ -19,7 +19,7 @@ impl<'a> fmt::Display for VecExtension<'a> {
             })
             .collect::<Vec<String>>();
         event_vec_repr.push_str(&events.join(", "));
-        event_vec_repr.push_str("]");
+        event_vec_repr.push_str(']'.to_string().as_str());
 
         write!(formatter, "{}", event_vec_repr.as_str())
     }

@@ -30,7 +30,7 @@ impl AsBetfairTab for BetfairScheduleTab {
 
 impl AsTab for BetfairScheduleTab {
     fn get_tab(&self) -> &Tab {
-        &self.betfair_tab.get_tab()
+        self.betfair_tab.get_tab()
     }
 }
 
@@ -106,7 +106,7 @@ impl BetfairScheduleTab {
     pub fn new(tab_engine: Arc<TabEngine>) -> Self {
         Self {
             betfair_tab: BetfairTab::new(tab_engine.clone()),
-            schedule_tab: ScheduleTab::new(tab_engine.clone()),
+            schedule_tab: ScheduleTab::new(tab_engine),
         }
     }
 
@@ -128,28 +128,28 @@ impl BetfairScheduleTab {
                 let venue_event_text = s_info_set
                     .venue_event
                     .and_then(|venue_event| venue_event.get_inner_text().ok())
-                    .ok_or(BetfairScheduleTabError::General(
+                    .ok_or_else(|| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not get venue event text."),
                     ))?;
 
-                let split_v_name_text = venue_event_text.split(":").collect::<Vec<_>>();
+                let split_v_name_text = venue_event_text.split(':').collect::<Vec<_>>();
                 let (&event_hh, &event_mm) = (
                     split_v_name_text
-                        .get(0)
-                        .ok_or(BetfairScheduleTabError::General(
+                        .first()
+                        .ok_or_else(|| BetfairScheduleTabError::General(
                             None,
                             String::from("Could not index hh of split hh:mm."),
                         ))?,
                     split_v_name_text
                         .get(1)
-                        .ok_or(BetfairScheduleTabError::General(
+                        .ok_or_else(|| BetfairScheduleTabError::General(
                             None,
                             String::from("Could not index mm of split hh:mm."),
                         ))?,
                 );
 
-                let day_offset = store.day_delta.ok_or(BetfairScheduleTabError::General(
+                let day_offset = store.day_delta.ok_or_else(|| BetfairScheduleTabError::General(
                     None,
                     String::from("There is no day delta to go off of."),
                 ))?;
@@ -159,31 +159,31 @@ impl BetfairScheduleTab {
                     StrExtension(event_mm),
                 )
                 .map(|event_datetime| event_datetime + Duration::days(day_offset as i64))
-                .or(Err(BetfairScheduleTabError::General(
+                .map_err(|_| BetfairScheduleTabError::General(
                     None,
                     String::from("Could not construct event's datetime."),
-                )))?;
+                ))?;
 
                 let event_attributes = s_info_set
                     .venue_event
                     .and_then(|venue_event| venue_event.get_attributes().ok())
-                    .ok_or(BetfairScheduleTabError::General(
+                    .ok_or_else(|| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not get event element attributes."),
                     ))?
-                    .ok_or(BetfairScheduleTabError::General(
+                    .ok_or_else(|| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not get event element attributes."),
                     ))?;
                 let href_key_index = event_attributes
                     .iter()
                     .position(|attribute| attribute == "href")
-                    .ok_or(BetfairScheduleTabError::General(
+                    .ok_or_else(|| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not index href key of element."),
                     ))?;
                 let href_value_index = href_key_index + 1;
-                let event_href = event_attributes.get(href_value_index).ok_or(
+                let event_href = event_attributes.get(href_value_index).ok_or_else(|| 
                     BetfairScheduleTabError::General(
                         None,
                         String::from("Could not index href value of element."),
@@ -193,7 +193,7 @@ impl BetfairScheduleTab {
                 let venue_name_text = s_info_set
                     .venue_name
                     .and_then(|venue_name| venue_name.get_inner_text().ok())
-                    .ok_or(BetfairScheduleTabError::General(
+                    .ok_or_else(|| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not get venue name text."),
                     ))?;
@@ -201,12 +201,12 @@ impl BetfairScheduleTab {
                 let event_link = EventLink {
                     venue_name: venue_name_text.clone(),
                     event_datetime,
-                    navigation_link: String::from(BETFAIR_CONSTANTS.base_url) + &event_href,
+                    navigation_link: String::from(BETFAIR_CONSTANTS.base_url) + event_href,
                 };
                 event_links
-                    .entry(venue_name_text.clone())
-                    .or_insert(vec![event_link.clone()])
-                    .push(event_link.clone());
+                    .entry(venue_name_text)
+                    .or_insert_with(|| vec![event_link.clone()])
+                    .push(event_link);
 
                 Ok(false)
             },
@@ -218,9 +218,9 @@ impl BetfairScheduleTab {
 
     fn loop_schedule_items<T>(
         &self,
-        on_day_change: &mut dyn FnMut(DateTime<FixedOffset>, BetfairScheduleInfoSet, &mut T),
-        on_tab_change: &mut dyn FnMut(DateTime<FixedOffset>, BetfairScheduleInfoSet, &mut T),
-        on_venue_change: &mut dyn FnMut(DateTime<FixedOffset>, BetfairScheduleInfoSet, &mut T),
+        on_day_change: &mut ScheduleLoopCallback<T>,
+        on_tab_change: &mut ScheduleLoopCallback<T>,
+        on_venue_change: &mut ScheduleLoopCallback<T>,
         on_event_change: &mut dyn FnMut(
             DateTime<FixedOffset>,
             BetfairScheduleInfoSet,
@@ -247,14 +247,14 @@ impl BetfairScheduleTab {
             .get_tab()
             .tab_engine
             .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_day_class).as_str())
-            .or(Err(BetfairScheduleTabError::General(
+            .map_err(|_| BetfairScheduleTabError::General(
                 None,
                 String::from("Could not compute the datetime of the browser."),
-            )))?;
+            ))?;
 
         let days_to_iterate = schedules_days
             .get(0..=1)
-            .ok_or(BetfairScheduleTabError::General(
+            .ok_or_else(|| BetfairScheduleTabError::General(
                 None,
                 String::from("Could not get the today and tomorrow date tabs."),
             ))?;
@@ -262,10 +262,10 @@ impl BetfairScheduleTab {
             .iter()
             .map(|day| day.get_inner_text().or(Err(())))
             .collect::<Result<Vec<_>, ()>>()
-            .or(Err(BetfairScheduleTabError::General(
+            .map_err(|_| BetfairScheduleTabError::General(
                 None,
                 String::from("Could not get the text of date tab."),
-            )))?;
+            ))?;
         if days_t_i_text[0] != "Today" || days_t_i_text[1] != "Tomorrow" {
             Err(BetfairScheduleTabError::General(
                 None,
@@ -275,10 +275,10 @@ impl BetfairScheduleTab {
         for day_iterating in days_to_iterate {
             day_iterating
                 .click()
-                .or(Err(BetfairScheduleTabError::General(
+                .map_err(|_| BetfairScheduleTabError::General(
                     None,
                     String::from("Could not click the desired date tab."),
-                )))?;
+                ))?;
 
             on_day_change(
                 browser_datetime,
@@ -297,17 +297,17 @@ impl BetfairScheduleTab {
                 .wait_for_elements(
                     format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_tab_class).as_str(),
                 )
-                .or(Err(BetfairScheduleTabError::General(
+                .map_err(|_| BetfairScheduleTabError::General(
                     None,
                     String::from("Could not read country tabs."),
-                )))?;
+                ))?;
             'outer_most: for country_tab in country_tabs {
                 country_tab
                     .click()
-                    .or(Err(BetfairScheduleTabError::General(
+                    .map_err(|_| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not click on country tab."),
-                    )))?;
+                    ))?;
 
                 on_tab_change(
                     browser_datetime,
@@ -326,10 +326,10 @@ impl BetfairScheduleTab {
                     .wait_for_elements(
                         format!(".{}", BETFAIR_CSS_CONSTANTS.venue_schedule_class).as_str(),
                     )
-                    .or(Err(BetfairScheduleTabError::General(
+                    .map_err(|_| BetfairScheduleTabError::General(
                         None,
                         String::from("Could not read venue schedules."),
-                    )))?;
+                    ))?;
                 for venue_schedule in &venue_schedules {
                     on_venue_change(
                         browser_datetime,
@@ -450,6 +450,8 @@ struct LoopScheduleStore {
     current_venue: Option<String>,
 }
 
+type ScheduleLoopCallback<T> = dyn FnMut(DateTime<FixedOffset>, BetfairScheduleInfoSet, &mut T);
+
 fn update_day_delta(
     _: DateTime<FixedOffset>,
     s_info_set: BetfairScheduleInfoSet,
@@ -459,8 +461,8 @@ fn update_day_delta(
         .day_tab
         .map(|selected_day| selected_day.get_inner_text())
     {
-        Some(Ok(s_day_text)) if s_day_text == String::from("Today") => 0,
-        Some(Ok(s_day_text)) if s_day_text == String::from("Tomorrow") => 1,
+        Some(Ok(s_day_text)) if s_day_text == *"Today" => 0,
+        Some(Ok(s_day_text)) if s_day_text == *"Tomorrow" => 1,
         _ => return,
     };
     store.day_delta = Some(s_days_delta);

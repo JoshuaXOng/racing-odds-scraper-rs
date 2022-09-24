@@ -17,14 +17,14 @@ pub fn create_element_from_bnid(tab_engine: &Tab, backend_node_id: u32) -> Resul
 
     Ok(Element {
         remote_object_id,
-        backend_node_id: backend_node_id,
+        backend_node_id,
         node_id: 0,
         parent: tab_engine,
     })
 }
 
 pub fn is_node_of_class(node: &Node, class: &str) -> bool {
-    let attributes = node.attributes.clone().unwrap_or(vec![]);
+    let attributes = node.attributes.clone().unwrap_or_default();
 
     let c_attr_key_index =
         if let Some(c_attr_index) = attributes.iter().position(|attribute| attribute == "class") {
@@ -44,16 +44,15 @@ pub fn is_node_of_class(node: &Node, class: &str) -> bool {
     c_attr_value.contains(class)
 }
 
-pub fn for_each_node(node: &Node, callback: &mut dyn FnMut(&Node) -> ()) {
-    callback(&node);
+pub fn for_each_node(node: &Node, callback: &mut dyn FnMut(&Node)) {
+    callback(node);
 
-    let children = if let Some(children) = &node.children {
-        children
-    } else {
-        return ();
+    let children = match &node.children {
+        Some(children) => children,
+        _ => return
     };
 
     for child in children {
-        for_each_node(&child, callback);
+        for_each_node(child, callback);
     }
 }
