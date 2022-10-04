@@ -49,10 +49,12 @@ impl AsEventsTab for BetfairEventsTab {
             )
         })?;
 
-        let v_event_links = event_links.get(venue_name).ok_or_else(|| EventsTabError::General(
-            None,
-            String::from("Could not key venue specific event links from schedule."),
-        ))?;
+        let v_event_links = event_links.get(venue_name).ok_or_else(|| {
+            EventsTabError::General(
+                None,
+                String::from("Could not key venue specific event links from schedule."),
+            )
+        })?;
 
         let v_event_link = v_event_links
             .iter()
@@ -60,7 +62,9 @@ impl AsEventsTab for BetfairEventsTab {
                 v_event_link.event_datetime - Duration::minutes(2) <= event_time
                     && v_event_link.event_datetime + Duration::minutes(2) >= event_time
             })
-            .ok_or_else(|| EventsTabError::General(None, String::from("Could not get link to event.")))?;
+            .ok_or_else(|| {
+                EventsTabError::General(None, String::from("Could not get link to event."))
+            })?;
 
         self.goto_url(v_event_link.navigation_link.as_str())
             .map_err(|error| {
@@ -78,10 +82,12 @@ impl AsEventsTab for BetfairEventsTab {
             .wait_for_elements(
                 format!(".{}", BETFAIR_CSS_CONSTANTS.contestant_entry_class).as_str(),
             )
-            .map_err(|_| EventsTabError::General(
-                None,
-                String::from("Could not scrape contestant entries from betting table."),
-            ))?;
+            .map_err(|_| {
+                EventsTabError::General(
+                    None,
+                    String::from("Could not scrape contestant entries from betting table."),
+                )
+            })?;
         for contestant_entry in contestant_entries {
             let c_entry_node = match contestant_entry.get_description() {
                 Ok(c_entry_node) => c_entry_node.to_owned(),

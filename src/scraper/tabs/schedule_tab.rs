@@ -19,9 +19,7 @@ pub trait AsScheduleTab: AsTab {
 impl ScheduleTab {
     pub fn new(tab_engine: Arc<TabEngine>) -> Self {
         Self {
-            tab: Tab {
-                tab_engine,
-            },
+            tab: Tab { tab_engine },
         }
     }
 }

@@ -49,7 +49,7 @@ pub fn for_each_node(node: &Node, callback: &mut dyn FnMut(&Node)) {
 
     let children = match &node.children {
         Some(children) => children,
-        _ => return
+        _ => return,
     };
 
     for child in children {

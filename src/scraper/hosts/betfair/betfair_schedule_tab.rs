@@ -128,75 +128,89 @@ impl BetfairScheduleTab {
                 let venue_event_text = s_info_set
                     .venue_event
                     .and_then(|venue_event| venue_event.get_inner_text().ok())
-                    .ok_or_else(|| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not get venue event text."),
-                    ))?;
+                    .ok_or_else(|| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not get venue event text."),
+                        )
+                    })?;
 
                 let split_v_name_text = venue_event_text.split(':').collect::<Vec<_>>();
                 let (&event_hh, &event_mm) = (
-                    split_v_name_text
-                        .first()
-                        .ok_or_else(|| BetfairScheduleTabError::General(
+                    split_v_name_text.first().ok_or_else(|| {
+                        BetfairScheduleTabError::General(
                             None,
                             String::from("Could not index hh of split hh:mm."),
-                        ))?,
-                    split_v_name_text
-                        .get(1)
-                        .ok_or_else(|| BetfairScheduleTabError::General(
+                        )
+                    })?,
+                    split_v_name_text.get(1).ok_or_else(|| {
+                        BetfairScheduleTabError::General(
                             None,
                             String::from("Could not index mm of split hh:mm."),
-                        ))?,
+                        )
+                    })?,
                 );
 
-                let day_offset = store.day_delta.ok_or_else(|| BetfairScheduleTabError::General(
-                    None,
-                    String::from("There is no day delta to go off of."),
-                ))?;
+                let day_offset = store.day_delta.ok_or_else(|| {
+                    BetfairScheduleTabError::General(
+                        None,
+                        String::from("There is no day delta to go off of."),
+                    )
+                })?;
                 let event_datetime = change_datetimes_hhmm(
                     browser_datetime,
                     StrExtension(event_hh),
                     StrExtension(event_mm),
                 )
                 .map(|event_datetime| event_datetime + Duration::days(day_offset as i64))
-                .map_err(|_| BetfairScheduleTabError::General(
-                    None,
-                    String::from("Could not construct event's datetime."),
-                ))?;
+                .map_err(|_| {
+                    BetfairScheduleTabError::General(
+                        None,
+                        String::from("Could not construct event's datetime."),
+                    )
+                })?;
 
                 let event_attributes = s_info_set
                     .venue_event
                     .and_then(|venue_event| venue_event.get_attributes().ok())
-                    .ok_or_else(|| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not get event element attributes."),
-                    ))?
-                    .ok_or_else(|| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not get event element attributes."),
-                    ))?;
+                    .ok_or_else(|| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not get event element attributes."),
+                        )
+                    })?
+                    .ok_or_else(|| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not get event element attributes."),
+                        )
+                    })?;
                 let href_key_index = event_attributes
                     .iter()
                     .position(|attribute| attribute == "href")
-                    .ok_or_else(|| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not index href key of element."),
-                    ))?;
+                    .ok_or_else(|| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not index href key of element."),
+                        )
+                    })?;
                 let href_value_index = href_key_index + 1;
-                let event_href = event_attributes.get(href_value_index).ok_or_else(|| 
+                let event_href = event_attributes.get(href_value_index).ok_or_else(|| {
                     BetfairScheduleTabError::General(
                         None,
                         String::from("Could not index href value of element."),
-                    ),
-                )?;
+                    )
+                })?;
 
                 let venue_name_text = s_info_set
                     .venue_name
                     .and_then(|venue_name| venue_name.get_inner_text().ok())
-                    .ok_or_else(|| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not get venue name text."),
-                    ))?;
+                    .ok_or_else(|| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not get venue name text."),
+                        )
+                    })?;
 
                 let event_link = EventLink {
                     venue_name: venue_name_text.clone(),
@@ -216,6 +230,7 @@ impl BetfairScheduleTab {
         Ok(event_links)
     }
 
+    #[tracing::instrument(skip(self, on_day_change, on_tab_change, on_venue_change, on_event_change, store))]
     fn loop_schedule_items<T>(
         &self,
         on_day_change: &mut ScheduleLoopCallback<T>,
@@ -247,38 +262,44 @@ impl BetfairScheduleTab {
             .get_tab()
             .tab_engine
             .wait_for_elements(format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_day_class).as_str())
-            .map_err(|_| BetfairScheduleTabError::General(
-                None,
-                String::from("Could not compute the datetime of the browser."),
-            ))?;
+            .map_err(|_| {
+                BetfairScheduleTabError::General(
+                    None,
+                    String::from("Could not compute the datetime of the browser."),
+                )
+            })?;
 
-        let days_to_iterate = schedules_days
-            .get(0..=1)
-            .ok_or_else(|| BetfairScheduleTabError::General(
+        let days_to_iterate = schedules_days.get(0..=1).ok_or_else(|| {
+            BetfairScheduleTabError::General(
                 None,
                 String::from("Could not get the today and tomorrow date tabs."),
-            ))?;
+            )
+        })?;
         let days_t_i_text = days_to_iterate
             .iter()
             .map(|day| day.get_inner_text().or(Err(())))
             .collect::<Result<Vec<_>, ()>>()
-            .map_err(|_| BetfairScheduleTabError::General(
-                None,
-                String::from("Could not get the text of date tab."),
-            ))?;
+            .map_err(|_| {
+                BetfairScheduleTabError::General(
+                    None,
+                    String::from("Could not get the text of date tab."),
+                )
+            })?;
         if days_t_i_text[0] != "Today" || days_t_i_text[1] != "Tomorrow" {
             Err(BetfairScheduleTabError::General(
                 None,
                 String::from("Date tabs are not correct."),
             ))?
         }
+        tracing::info!("Assigned day tabs to iterate upon: {:?}", days_to_iterate);
+
         for day_iterating in days_to_iterate {
-            day_iterating
-                .click()
-                .map_err(|_| BetfairScheduleTabError::General(
+            day_iterating.click().map_err(|_| {
+                BetfairScheduleTabError::General(
                     None,
                     String::from("Could not click the desired date tab."),
-                ))?;
+                )
+            })?;
 
             on_day_change(
                 browser_datetime,
@@ -297,17 +318,19 @@ impl BetfairScheduleTab {
                 .wait_for_elements(
                     format!(".{}", BETFAIR_CSS_CONSTANTS.schedule_tab_class).as_str(),
                 )
-                .map_err(|_| BetfairScheduleTabError::General(
-                    None,
-                    String::from("Could not read country tabs."),
-                ))?;
+                .map_err(|_| {
+                    BetfairScheduleTabError::General(
+                        None,
+                        String::from("Could not read country tabs."),
+                    )
+                })?;
             'outer_most: for country_tab in country_tabs {
-                country_tab
-                    .click()
-                    .map_err(|_| BetfairScheduleTabError::General(
+                country_tab.click().map_err(|_| {
+                    BetfairScheduleTabError::General(
                         None,
                         String::from("Could not click on country tab."),
-                    ))?;
+                    )
+                })?;
 
                 on_tab_change(
                     browser_datetime,
@@ -326,10 +349,12 @@ impl BetfairScheduleTab {
                     .wait_for_elements(
                         format!(".{}", BETFAIR_CSS_CONSTANTS.venue_schedule_class).as_str(),
                     )
-                    .map_err(|_| BetfairScheduleTabError::General(
-                        None,
-                        String::from("Could not read venue schedules."),
-                    ))?;
+                    .map_err(|_| {
+                        BetfairScheduleTabError::General(
+                            None,
+                            String::from("Could not read venue schedules."),
+                        )
+                    })?;
                 for venue_schedule in &venue_schedules {
                     on_venue_change(
                         browser_datetime,
